@@ -5,22 +5,25 @@ import (
 	"net"
 )
 
-func getNode() string {
+func getNode() [6]byte {
+	var nodeID [6]byte
+
 	node, ok := getMacAddr()
 	if !ok {
-		return "00:00:00:00:00:00"
+		return nodeID
 	}
 
-	return node
+	copy(nodeID[:], node[:6])
+	return nodeID
 }
 
-func getMacAddr() (string, bool) {
-	var addr string
+func getMacAddr() ([]byte, bool) {
+	var addr []byte
 	interfaces, err := net.Interfaces()
 	if err == nil {
 		for _, i := range interfaces {
 			if i.Flags&net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
-				addr = i.HardwareAddr.String()
+				addr = i.HardwareAddr
 				return addr, true
 			}
 		}
