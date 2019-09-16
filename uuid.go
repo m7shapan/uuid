@@ -1,57 +1,43 @@
 package uuid
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
+	"encoding/binary"
+	"encoding/hex"
 )
 
 // NewUUID create Universally unique identifier
 func NewUUID() string {
+	var uuid [16]byte
+	t := getTimeSince1582()
+	cSeq := clockSeq()
+	timeLow := uint32(t)
+	timeMid := uint16((t >> 32))
+	timeHi := uint16((t >> 48))
+	timeHi += 0x1000
 
-	binaryTime := get60BitBinaryTime()
-	clockSeq := get14BitClockSeq()
 	node := getNode()
-	firstNodeID, secondNodeID := getNodeID(node)
 
-	return fmt.Sprintf("%s-%s%s-%s%s%s-%s",
-		getTimeLow(binaryTime),
-		getTimeMid(binaryTime),
-		getTimeHiAndVersion(binaryTime),
-		getClockSeqHiAndReserved(clockSeq),
-		getClockSeqLow(clockSeq),
-		firstNodeID,
-		secondNodeID,
-	)
+	binary.BigEndian.PutUint32(uuid[0:], timeLow)
+	binary.BigEndian.PutUint16(uuid[4:], timeMid)
+	binary.BigEndian.PutUint16(uuid[6:], timeHi)
+	binary.BigEndian.PutUint16(uuid[6:], timeHi)
+	binary.BigEndian.PutUint16(uuid[8:], cSeq)
+
+	copy(uuid[10:], node[:6])
+
+	return encode(uuid)
 }
 
-func getTimeLow(s string) string {
-	i, _ := strconv.ParseUint(s[0:32], 2, 32)
-	return fmt.Sprintf("%x", i)
-}
+func encode(uuid [16]byte) string {
+	dst := make([]byte, hex.EncodedLen(len(uuid)+3))
 
-func getTimeMid(s string) string {
-	i, _ := strconv.ParseUint(s[32:48], 2, 32)
-	return fmt.Sprintf("%x", i)
-}
+	hex.Encode(dst, uuid[0:4])
+	dst[8] = '-'
+	hex.Encode(dst[9:17], uuid[4:8])
+	dst[17] = '-'
+	hex.Encode(dst[18:26], uuid[8:12])
+	dst[26] = '-'
+	hex.Encode(dst[27:], uuid[12:])
 
-func getTimeHiAndVersion(s string) string {
-	i, _ := strconv.ParseUint(fmt.Sprintf("%s%s", "00011", s[48:60]), 2, 32)
-	return fmt.Sprintf("%x", i)
-}
-
-func getClockSeqLow(s string) string {
-	i, _ := strconv.ParseUint(s[0:8], 2, 8)
-	return fmt.Sprintf("%x", i)
-}
-
-func getClockSeqHiAndReserved(s string) string {
-	i, _ := strconv.ParseUint(fmt.Sprintf("%s%s", "10", s[8:14]), 2, 8)
-	return fmt.Sprintf("%x", i)
-}
-
-func getNodeID(s string) (string, string) {
-	sArr := strings.Split(s, ":")
-
-	return fmt.Sprintf("%s", strings.Join(sArr[0:2], "")), fmt.Sprintf("%s", strings.Join(sArr[2:], ""))
+	return string(dst[:])
 }
