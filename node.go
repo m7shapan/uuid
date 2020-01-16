@@ -5,6 +5,12 @@ import (
 	"net"
 )
 
+var node [6]byte
+
+func init() {
+	node = getNode()
+}
+
 func getNode() [6]byte {
 	var nodeID [6]byte
 

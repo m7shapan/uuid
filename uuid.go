@@ -15,8 +15,6 @@ func NewUUID() string {
 	timeHi := uint16((t >> 48))
 	timeHi += 0x1000
 
-	node := getNode()
-
 	binary.BigEndian.PutUint32(uuid[0:], timeLow)
 	binary.BigEndian.PutUint16(uuid[4:], timeMid)
 	binary.BigEndian.PutUint16(uuid[6:], timeHi)
