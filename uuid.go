@@ -8,8 +8,8 @@ import (
 // NewUUID create Universally unique identifier
 func NewUUID() string {
 	var uuid [16]byte
-	t := getTimeSince1582()
-	cSeq := clockSeq()
+	t, cSeq := getTime()
+
 	timeLow := uint32(t)
 	timeMid := uint16((t >> 32))
 	timeHi := uint16((t >> 48))
