@@ -1,6 +1,7 @@
 package uuid
 
 import (
+	"math/rand"
 	"sync"
 	"time"
 )
@@ -10,16 +11,14 @@ var clockSeq uint16
 
 var lock = sync.RWMutex{}
 
-func getNanosecond() int64 {
-	defer lock.Unlock()
-
-	lock.Lock()
-	t := time.Now()
-	return t.UnixNano()
+func init() {
+	// 16383 is the max number of 14 bit
+	clockSeq = uint16(rand.Intn(16383))
 }
 
 func time100Nano() uint64 {
-	return uint64(getNanosecond() / 100)
+	t := time.Now()
+	return uint64(t.UnixNano() / 100)
 }
 
 func getTimeSince1582() uint64 {
@@ -28,10 +27,10 @@ func getTimeSince1582() uint64 {
 }
 
 func getTime() (uint64, uint16) {
-	t := getTimeSince1582()
-
 	defer lock.Unlock()
 	lock.Lock()
+
+	t := getTimeSince1582()
 	if lastTime == t {
 		clockSeq++
 	} else {
